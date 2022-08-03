@@ -90,6 +90,7 @@ if __name__ == '__main__':
         df[col] = calc_EMA(df['nikkei225'],df_now=df['nikkei225'],term=term)
         df['CloseEMAGrad_'+str(term)] = df[col] / df[col].shift()
 
-    df['RSI_14'] = calc_RSI_(df['nikkei225'],df_now=df['nikkei225'],term=14)
+    df['RSI_14_'] = calc_RSI_(df['nikkei225'],term=14)
+    df['RSI_14'] = calc_RSI(df['nikkei225'],df_now=df['nikkei225'],term=14)
 
     print(df)
