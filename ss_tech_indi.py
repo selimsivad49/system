@@ -1,15 +1,15 @@
 import pandas as pd
 
-## EMAの計算
-## 15:15の終値だけで、ewm()で計算すると当日の15:00時点の値が計算できない
-# 【Python】移動平均(SMA)と指数移動平均(EMA)を計算する | ミナピピンの研究室
-# https://tkstock.site/2019/09/27/indicator-python-sma-ema/
-
-# 指数移動平均線を計算する関数
-def calc_ema(df_now,df_old, term, index=True):
-    df = pd.DataFrame()
-    df['now'] = df_now
-    df['old'] = df_old
+## EMA
+# calc_EMA(df_main) は df_main.ewm(span=3).mean() と同じ
+def calc_EMA(df_main, df_now=None, term=3, index=True):
+    df = pd.DataFrame(index=df_main.index)
+    df['old'] = df_main
+    if col_now == None:
+        df['now'] = df_main
+    else:
+        df['now'] = df_now
+    
     # 移動平均を計算する
     df['sum_old'] = df['old'].rolling(window = term-1, center = False).sum().shift()
     df['sma'] = (df['now'] + df['sum_old']) / term
@@ -36,7 +36,8 @@ def calc_ema(df_now,df_old, term, index=True):
     # print(df)
     return(df['ema'])
 
-def get_RSI(df,term=14):
+## RSI
+def calc_RSI_(df,term=14):
     df_diff = df.diff(1)
     # RSI計算のための上昇、下降を算出する
     df_up, df_down = df_diff.copy(), df_diff.copy()
@@ -50,14 +51,15 @@ def get_RSI(df,term=14):
     # print(df_down_term)
     return((df_up_term / (df_up_term + df_down_term)) * 100)
 
-## 当日の終値が出る前にRSIを予測する
-## 前日までは15:15、当日分は15:00の値を使用
-def get_RSI_pred(df_now,df_old,term=14):
+## RSI
+def calc_RSI(df_main,df_now=None,term=14):
 
     df_diff = pd.DataFrame()
-
-    df_diff['now'] = df_now
-    df_diff['old'] = df_old
+    if df_now == None:
+        df_diff['old'] = df_main
+    else:
+        df_diff['now'] = df_now
+    df_diff['old'] = df_main
 
     df_diff['diff_old'] = df_diff['old'].diff(1)
     # RSI計算のための上昇、下降を算出する
@@ -78,21 +80,15 @@ def get_RSI_pred(df_now,df_old,term=14):
     return(df_diff['RSI'])
 
 if __name__ == '__main__':
-  ema_terms = [5]
-  for term in ema_terms:
-      col = 'CloseEMA_' + str(term)
-      # df[col] = df['Close_1515'].ewm(span=3, adjust=False).mean()
-      # df[col] = calc_ema(df['Close_1515'],df['Close_1515'],term)
-      df[col] = calc_ema(df['Close_End1500'],df['Close_End1515'],term)
-      df['CloseEMAGrad_'+str(term)] = df[col] / df[col].shift()
+    df = data.DataReader('^N225', 'yahoo', '2020-01-01', '2021-01-01')
 
+    ema_terms = [5]
+    for term in ema_terms:
+        col = 'EMA_' + str(term)
+        df[col+'_'] = df['Close'].ewm(span=term, adjust=False).mean()
+        df[col] = calc_EMA(df['Close'],df_now=df['Close'],term)
+        df['CloseEMAGrad_'+str(term)] = df[col] / df[col].shift()
 
-  df['Last15'] = df['Close_End1515'] - df['Open_1500']
+    df['RSI_14'] = calc_RSI_(df['Close'],df_now=df['Close'],14)
 
-  print(df.iloc[:,:5])
-  df.iloc[:,-10:]
-  
-  # RSI
-  df['RSI_14'] = get_RSI_pred(df[['Close_End1500']],df[['Close_End1515']],14)
-
-  df.iloc[:,-5:]
+    print(df)
