@@ -6,12 +6,11 @@ import pandas_datareader.data as web
 def calc_EMA(df_main, df_now=None, term=3, index=True):
     df = pd.DataFrame(index=df_main.index)
     df['old'] = df_main
-    if type(df_now) == pd.core.series.Series:
-        df['now'] = df_now
-    else:
-        print(type(df_now))
+    if isinstance(df_now, type(None)):
         df['now'] = df_main
-    
+    else:
+        df['now'] = df_now
+
     # 移動平均を計算する
     df['sum_old'] = df['old'].rolling(window = term-1, center = False).sum().shift()
     df['sma'] = (df['now'] + df['sum_old']) / term
@@ -57,11 +56,10 @@ def calc_RSI_(df,term=14):
 def calc_RSI(df_main,df_now=None,term=14):
 
     df_diff = pd.DataFrame(index=df_main.index)
-    if type(df_now) == pd.core.series.Series:
-        df_diff['now'] = df_now
-    else:
+    if isinstance(df_now, type(None)):
         df_diff['now'] = df_main
-    df_diff['old'] = df_main
+    else:
+        df_diff['now'] = df_now
 
     df_diff['diff_old'] = df_diff['old'].diff(1)
     # RSI計算のための上昇、下降を算出する
