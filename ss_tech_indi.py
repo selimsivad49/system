@@ -87,7 +87,7 @@ if __name__ == '__main__':
     for term in ema_terms:
         col = 'EMA_' + str(term)
         df[col+'_'] = df['Close'].ewm(span=term, adjust=False).mean()
-        df[col] = calc_EMA(df['Close'],df_now=df['Close'],term)
+        df[col] = calc_EMA(df['Close'],df_now=df['Close'],term=term)
         df['CloseEMAGrad_'+str(term)] = df[col] / df[col].shift()
 
     df['RSI_14'] = calc_RSI_(df['Close'],df_now=df['Close'],14)
