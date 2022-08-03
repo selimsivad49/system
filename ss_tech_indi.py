@@ -81,7 +81,7 @@ def calc_RSI(df_main,df_now=None,term=14):
     return(df_diff['RSI'])
 
 if __name__ == '__main__':
-    df = web.DataReader('^N225', 'yahoo', '2020-01-01', '2021-01-01')
+    df = web.DataReader('nikkei225', 'fred', '2020-01-01', '2021-01-01')
 
     ema_terms = [5]
     for term in ema_terms:
