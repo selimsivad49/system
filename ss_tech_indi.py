@@ -86,10 +86,10 @@ if __name__ == '__main__':
     ema_terms = [5]
     for term in ema_terms:
         col = 'EMA_' + str(term)
-        df[col+'_'] = df['Close'].ewm(span=term, adjust=False).mean()
-        df[col] = calc_EMA(df['Close'],df_now=df['Close'],term=term)
+        df[col+'_'] = df['nikkei225'].ewm(span=term, adjust=False).mean()
+        df[col] = calc_EMA(df['nikkei225'],df_now=df['nikkei225'],term=term)
         df['CloseEMAGrad_'+str(term)] = df[col] / df[col].shift()
 
-    df['RSI_14'] = calc_RSI_(df['Close'],df_now=df['Close'],term=14)
+    df['RSI_14'] = calc_RSI_(df['nikkei225'],df_now=df['nikkei225'],term=14)
 
     print(df)
