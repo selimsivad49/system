@@ -57,7 +57,7 @@ def calc_RSI(df_main,df_now=None,term=14):
 
     df_diff = pd.DataFrame(index=df_main.index)
     if df_now is None:
-        df_diff['old'] = df_main
+        df_diff['now'] = df_main
     else:
         df_diff['now'] = df_now
     df_diff['old'] = df_main
