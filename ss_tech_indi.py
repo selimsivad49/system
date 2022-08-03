@@ -9,6 +9,7 @@ def calc_EMA(df_main, df_now=None, term=3, index=True):
     if type(df_now) == pd.core.series.Series:
         df['now'] = df_now
     else:
+        print(type(df_now))
         df['now'] = df_main
     
     # 移動平均を計算する
