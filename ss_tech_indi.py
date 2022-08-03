@@ -1,11 +1,12 @@
 import pandas as pd
+import pandas_datareader.data as web
 
 ## EMA
 # calc_EMA(df_main) は df_main.ewm(span=3).mean() と同じ
 def calc_EMA(df_main, df_now=None, term=3, index=True):
     df = pd.DataFrame(index=df_main.index)
     df['old'] = df_main
-    if col_now == None:
+    if df_now == None:
         df['now'] = df_main
     else:
         df['now'] = df_now
@@ -28,7 +29,7 @@ def calc_EMA(df_main, df_now=None, term=3, index=True):
     df['ema'] = (df['sma'].shift() * (term - 1) + df['now']*2)/(term + 1)
     df['ema'] = df['sma']
 
-    for i in range(1,len(df_now.index)):
+    for i in range(1,len(df.index)):
         df.at[df.index[i],'ema'] = (df.loc[df.index[i-1],'ema'] * (term-1) + df.loc[df.index[i],'now']*2) / (term+1)
         # αを使う場合。↑と同じ
         # df.at[df.index[i],'ema_'] = df.at[df.index[i-1],'ema'] + a*(df.loc[df.index[i],'now'] - df.at[df.index[i-1],'ema'])
@@ -54,7 +55,7 @@ def calc_RSI_(df,term=14):
 ## RSI
 def calc_RSI(df_main,df_now=None,term=14):
 
-    df_diff = pd.DataFrame()
+    df_diff = pd.DataFrame(index=df_main.index)
     if df_now == None:
         df_diff['old'] = df_main
     else:
@@ -80,7 +81,7 @@ def calc_RSI(df_main,df_now=None,term=14):
     return(df_diff['RSI'])
 
 if __name__ == '__main__':
-    df = data.DataReader('^N225', 'yahoo', '2020-01-01', '2021-01-01')
+    df = web.DataReader('^N225', 'yahoo', '2020-01-01', '2021-01-01')
 
     ema_terms = [5]
     for term in ema_terms:
