@@ -60,8 +60,9 @@ def calc_RSI(df_main,df_now=None,term=14):
         df_diff['now'] = df_now
     else:
         df_diff['now'] = df_main
+    print(df_diff)
     df_diff['old'] = df_main
-
+    print(df_diff)
     df_diff['diff_old'] = df_diff['old'].diff(1)
     # RSI計算のための上昇、下降を算出する
     df_diff['diff_old_up'] = df_diff['diff_old'].apply(lambda x : max(x,0))
