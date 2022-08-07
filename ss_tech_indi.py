@@ -78,6 +78,17 @@ def calc_RSI(df_main,df_latest=None,term=14):
     # print(df_diff.tail(10))
     return(df['RSI'])
 
+## MACD
+def calc_MACD(df_main, df_latest=None, term1=12, term2=26):
+    df = pd.DataFrame(index=df_main.index)
+
+    df['ema1'] = calc_EMA(df_main,df_latest=df_latest,term=term1)
+    df['ema2'] = calc_EMA(df_main,df_latest=df_latest,term=term2)
+    df['macd'] = df['ema1'] - df['ema2']
+    df['signal'] = df['macd'].rolling(9).mean()
+
+    return(df['macd'],df['signal'])
+
 if __name__ == '__main__':
     df = web.DataReader('nikkei225', 'fred', '2020-01-01', '2021-01-01')
 
@@ -92,6 +103,7 @@ if __name__ == '__main__':
     df['RSI_14'] = calc_RSI(df['nikkei225'],df_latest=df['nikkei225'],term=14)
     df['RSI_14_'] = calc_RSI(df['nikkei225'])
     df['RSI_14__'] = calc_RSI_(df['nikkei225'],term=14)
+    df['MACD'],df['Signal'] = calc_MACD(df['nikkei225'])
 
     df.to_csv('nikkei225.csv')
     print(df)
