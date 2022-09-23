@@ -1,5 +1,22 @@
 import pandas as pd
 import pandas_datareader.data as web
+import numpy as np
+## 使い方
+## Colab
+# import os
+# import shutil
+# !git clone https://github.com/selimsivad49/system.git
+## Colabでテスト実行
+# !python3 '/content/system/ss_tech_indi.py'
+## 直接ダウンロード
+# if not os.path.exists('system/ss_tech_indi.py'):
+#     !wget  -O ss_tech_indi.py "https://raw.githubusercontent.com/selimsivad49/system/main/ss_tech_indi.py"
+#     !mkdir system
+#     !mv ss_tech_indi.py system/
+# sys.path.append('system/')
+# sys.path.append('/content/system/')
+
+# import ss_tech_indi as ssti
 
 ## EMA
 # calc_EMA(df_main) は df_main.ewm(span=3).mean() と同じ
@@ -89,6 +106,109 @@ def calc_MACD(df_main, df_latest=None, term1=12, term2=26):
 
     return(df['macd'],df['signal'])
 
+def calc_ATR(high, low, close, term=14):
+
+    # ATR  
+    tr1 = pd.DataFrame(high - low)
+    tr2 = pd.DataFrame(abs(high - close.shift(1)))
+    tr3 = pd.DataFrame(abs(low - close.shift(1)))
+    frames = [tr1, tr2, tr3]
+    tr = pd.concat(frames, axis = 1, join = 'inner').max(axis = 1)
+    atr = tr.ewm(term).mean()
+
+    return(atr)
+
+def calc_SuperTrend(high, low, close, term=14, multiplier=3):
+
+    # ATR  
+    # tr1 = pd.DataFrame(high - low)
+    # tr2 = pd.DataFrame(abs(high - close.shift(1)))
+    # tr3 = pd.DataFrame(abs(low - close.shift(1)))
+    # frames = [tr1, tr2, tr3]
+    # tr = pd.concat(frames, axis = 1, join = 'inner').max(axis = 1)
+    # atr = tr.ewm(term).mean()
+    atr = calc_ATR(high, low, close, term)
+    
+    # H/L AVG AND BASIC UPPER & LOWER BAND
+    
+    hl_avg = (high + low) / 2
+    upper_band = (hl_avg + multiplier * atr).dropna()
+    lower_band = (hl_avg - multiplier * atr).dropna()
+    
+    # FINAL UPPER BAND
+    final_bands = pd.DataFrame(columns = ['upper', 'lower'])
+    final_bands.iloc[:,0] = [x for x in upper_band - upper_band]
+    final_bands.iloc[:,1] = final_bands.iloc[:,0]
+    for i in range(len(final_bands)):
+        if i == 0:
+            final_bands.iloc[i,0] = 0
+        else:
+            if (upper_band[i] < final_bands.iloc[i-1,0]) | (close[i-1] > final_bands.iloc[i-1,0]):
+                final_bands.iloc[i,0] = upper_band[i]
+            else:
+                final_bands.iloc[i,0] = final_bands.iloc[i-1,0]
+    
+    # FINAL LOWER BAND
+    
+    for i in range(len(final_bands)):
+        if i == 0:
+            final_bands.iloc[i, 1] = 0
+        else:
+            if (lower_band[i] > final_bands.iloc[i-1,1]) | (close[i-1] < final_bands.iloc[i-1,1]):
+                final_bands.iloc[i,1] = lower_band[i]
+            else:
+                final_bands.iloc[i,1] = final_bands.iloc[i-1,1]
+    
+    # SUPERTREND
+    
+    supertrend = pd.DataFrame(columns = [f'supertrend_{term}'])
+    supertrend.iloc[:,0] = [x for x in final_bands['upper'] - final_bands['upper']]
+    
+    for i in range(len(supertrend)):
+        if i == 0:
+            supertrend.iloc[i, 0] = 0
+        elif supertrend.iloc[i-1, 0] == final_bands.iloc[i-1, 0] and close[i] < final_bands.iloc[i, 0]:
+            supertrend.iloc[i, 0] = final_bands.iloc[i, 0]
+        elif supertrend.iloc[i-1, 0] == final_bands.iloc[i-1, 0] and close[i] > final_bands.iloc[i, 0]:
+            supertrend.iloc[i, 0] = final_bands.iloc[i, 1]
+        elif supertrend.iloc[i-1, 0] == final_bands.iloc[i-1, 1] and close[i] > final_bands.iloc[i, 1]:
+            supertrend.iloc[i, 0] = final_bands.iloc[i, 1]
+        elif supertrend.iloc[i-1, 0] == final_bands.iloc[i-1, 1] and close[i] < final_bands.iloc[i, 1]:
+            supertrend.iloc[i, 0] = final_bands.iloc[i, 0]
+    
+    supertrend = supertrend.set_index(upper_band.index)
+    # supertrend = supertrend.dropna()[1:]
+    supertrend = supertrend.bfill()
+
+    # ST UPTREND/DOWNTREND
+    
+    upt = []
+    dt = []
+    close = close.iloc[len(close) - len(supertrend):]
+
+    for i in range(len(supertrend)):
+        if close[i] > supertrend.iloc[i, 0]:
+            upt.append(supertrend.iloc[i, 0])
+            dt.append(np.nan)
+        elif close[i] < supertrend.iloc[i, 0]:
+            upt.append(np.nan)
+            dt.append(supertrend.iloc[i, 0])
+        else:
+            upt.append(np.nan)
+            dt.append(np.nan)
+            
+    st, upt, dt = pd.Series(supertrend.iloc[:, 0]), pd.Series(upt), pd.Series(dt)
+    upt.index, dt.index = supertrend.index, supertrend.index
+    
+    return st, upt, dt
+
+def calc_ATR2(high,low,close,term=14):
+    h, l, c_prev = high, low, close.shift(1)
+    tr = np.max([high - low, (c_prev - h).abs(), (c_prev - l).abs()], axis=0)
+    atr = pd.Series(tr).ewm(term).mean().bfill().values
+
+    return(atr)
+
 if __name__ == '__main__':
     df = web.DataReader('nikkei225', 'fred', '2020-01-01', '2021-01-01')
 
@@ -105,5 +225,7 @@ if __name__ == '__main__':
     df['RSI_14__'] = calc_RSI_(df['nikkei225'],term=14)
     df['MACD'],df['Signal'] = calc_MACD(df['nikkei225'])
 
+    df['ST'],df['ST_UPT'],df['ST_DT'] = get_supertrend(df.High, df.Low, df.Close, term=14, multiplier=3)
+    
     df.to_csv('nikkei225.csv')
     print(df)
